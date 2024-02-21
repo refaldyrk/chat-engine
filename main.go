@@ -1,12 +1,12 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/mervick/aes-everywhere/go/aes256"
-	"math/rand"
 	"net/http"
 	"sync"
-	"time"
 )
 
 type Client struct {
@@ -28,14 +28,10 @@ type ChatServer struct {
 }
 
 func generateRoomSecret(roomID string) string {
-	const randomChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	rand.Seed(time.Now().UnixNano())
-	randomString := make([]byte, 8)
-	for i := range randomString {
-		randomString[i] = randomChars[rand.Intn(len(randomChars))]
-	}
+	hash := sha256.New()
+	hash.Write([]byte(roomID))
+	secret := hex.EncodeToString(hash.Sum(nil))
 
-	secret := fmt.Sprintf("%s%s", roomID, string(randomString))
 	return secret
 }
 
