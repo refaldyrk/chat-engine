@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/mervick/aes-everywhere/go/aes256"
+	"github.com/rs/cors"
 	"net/http"
 	"sync"
 )
@@ -109,7 +110,7 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 
-	fmt.Fprintf(w, "data: Welcome to the chat room %s!\n\n", roomID)
+	fmt.Fprintf(w, "data: system:Welcome to the chat room %s!\n\n", roomID)
 	w.(http.Flusher).Flush()
 
 	for {
@@ -156,7 +157,8 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 var chatServerInstance = NewChatServer()
 
 func main() {
-	http.HandleFunc("/", handleChat)
+	handler := cors.Default().Handler(http.HandlerFunc(handleChat))
+	http.Handle("/", handler)
 	http.HandleFunc("/send", handleSend)
 
 	fmt.Println("Server listening on :8080")
