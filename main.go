@@ -105,6 +105,10 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 	room := chatServer.GetRoom(roomID)
 
 	room.AddClient <- client
+	go func() {
+		encryptedJoinMessage := aes256.Encrypt(fmt.Sprintf("system:%s has joined the chat.", clientID), secret)
+		room.Broadcast(encryptedJoinMessage)
+	}()
 
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -122,6 +126,8 @@ func handleChat(w http.ResponseWriter, r *http.Request) {
 			w.(http.Flusher).Flush()
 		case <-r.Context().Done():
 			room.RemoveClient <- client.ID
+			encryptedLeaveMessage := aes256.Encrypt(fmt.Sprintf("system:%s has left the chat.", clientID), secret)
+			room.Broadcast(encryptedLeaveMessage)
 			return
 		}
 	}
